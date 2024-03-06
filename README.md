@@ -35,7 +35,9 @@ Starter project enabling you to add multi-room audio streaming via Bluetooth, Ai
 
 ## Balena Pi Hole
 
-[![logo](https://raw.githubusercontent.com/klutchell/balena-pihole/main/logo.png)](https://github.com/klutchell/balena-pihole)
+<a href="https://github.com/klutchell/balena-pihole"><img src="https://raw.githubusercontent.com/klutchell/balena-pihole/main/logo.png" width="200" height="200"></a>
+
+<!-- [![logo](https://raw.githubusercontent.com/klutchell/balena-pihole/main/logo.png)](https://github.com/klutchell/balena-pihole) -->
 
 This project is a [balenaCloud](https://www.balena.io/cloud) stack with the following services:
 
