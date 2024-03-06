@@ -1,0 +1,160 @@
+version: "2.1"
+
+volumes:
+  pihole_config: {}
+  dnsmasq_config: {}
+  tailscale: {}
+  spotifycache: {}
+
+services:
+  pihole:
+    build: pihole
+    cap_add:
+      - SYS_TTY_CONFIG
+      - NET_ADMIN
+    volumes:
+      - "pihole_config:/etc/pihole"
+      - "dnsmasq_config:/etc/dnsmasq.d"
+    dns:
+      - "127.0.0.1"
+      - "1.1.1.1"
+    network_mode: host
+    labels:
+      io.balena.features.dbus: "1"
+    devices:
+      - /dev/tty0
+      - /dev/tty1
+    tmpfs:
+      - /var/log/pihole
+    environment:
+      DNSMASQ_LISTENING: all
+      PIHOLE_DNS_: 1.1.1.1;1.0.0.1
+      FONTFACE: Terminus
+      FONTSIZE: 8x14
+      WEBPASSWORD: placeholder
+      VIRTUAL_HOST: balena-devices.com
+      WEB_BIND_ADDR: 0.0.0.0
+
+  unbound:
+    build: unbound
+    cap_add:
+     - NET_ADMIN
+    ports:
+      - "5053:5053/tcp"
+      - "5053:5053/udp"
+
+  # https://github.com/balena-labs-projects/fbcp
+  # https://hub.balena.io/blocks/1792683/fbcp
+  fbcp:
+    image: bh.cr/balenalabs/fbcp/1.0.4
+    privileged: true
+
+  # https://hub.docker.com/r/tailscale/tailscale
+  # https://github.com/tailscale/tailscale/blob/main/cmd/containerboot/main.go
+  # https://tailscale.com/kb/1282/docker
+  # https://tailscale.com/kb/1278/tailscaled
+  # https://tailscale.com/kb/1241/tailscale-up
+  # https://tailscale.com/kb/1242/tailscale-serve
+  # https://tailscale.com/kb/1311/tailscale-funnel
+  tailscale:
+    image: tailscale/tailscale:v1.61.11@sha256:06e993635efcfa9574147ed223424cba562f7a5f0785e3b74381477414d57227
+    restart: unless-stopped
+    environment:
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SOCKET: /var/run/tailscale/tailscaled.sock
+      TS_USERSPACE: false
+      TS_AUTH_ONCE: false
+      TS_HOSTNAME: pi-hole
+      TS_EXTRA_ARGS: --accept-dns=false --reset
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_MODULE
+    labels:
+      io.balena.features.kernel-modules: 1
+    tmpfs:
+      - /tmp
+      - /run
+    volumes:
+      - tailscale:/var/lib/tailscale
+    entrypoint:
+      - /bin/sh
+      - -c
+    command:
+      - |
+        modprobe tun || true
+        modprobe wireguard || true
+        mkdir -p /dev/net
+        [ ! -c /dev/net/tun ] && mknod /dev/net/tun c 10 200
+        /usr/local/bin/containerboot
+  # Core services
+  # -- Required for a fully featured installation of balenaSound
+  # -- Mutiroom services can be removed if not using multiroom mode
+  audio:
+    build: ./core/audio
+    privileged: true
+    labels:
+      io.balena.features.dbus: 1
+    ports:
+      - 4317:4317
+
+  sound-supervisor:
+    build:
+      context: .
+      dockerfile: ./core/sound-supervisor/Dockerfile.template
+    network_mode: host
+    labels:
+      io.balena.features.balena-api: "1"
+      io.balena.features.supervisor-api: 1
+    environment:
+      SOUND_SUPERVISOR_API_PORT: "3000"
+
+  multiroom-server:
+    build: ./core/multiroom/server
+    restart: on-failure
+    ports:
+      - 1704:1704
+      - 1705:1705
+      - 1780:1780
+
+  multiroom-client:
+    build: ./core/multiroom/client
+    restart: on-failure
+
+  # Plugins
+  # -- Additional plugins can be added. See https://balena-labs-projects.github.io/balena-sound/plugins.
+  # -- Remove unwanted plugins as needed
+  bluetooth:
+    build: ./plugins/bluetooth
+    restart: on-failure
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    labels:
+      io.balena.features.dbus: 1
+
+  airplay:
+    build: ./plugins/airplay
+    restart: on-failure
+    network_mode: host
+    privileged: true
+    labels:
+      io.balena.features.dbus: 1
+
+  spotify:
+    build: ./plugins/spotify
+    restart: on-failure
+    privileged: true
+    network_mode: host
+    volumes:
+      - spotifycache:/var/cache/raspotify
+
+  # https://github.com/balenablocks/hostname
+  hostname:
+    build: ./core/hostname
+    restart: no
+    labels:
+      io.balena.features.supervisor-api: 1
+    environment:
+      SET_HOSTNAME: balena
