@@ -47,6 +47,20 @@ This project is a [balenaCloud](https://www.balena.io/cloud) stack with the foll
 
 ## Configuration Changes
 
+### Static IP Addres
+
+Set a static IP Address in case the device reboots.
+
+> You have to be in `/mnt/boot/system-connections` to make persistent changes.
+
+```toml
+[ipv4]
+address1=192.168.1.111/24,192.168.1.1
+dns=8.8.8.8;8.8.4.4;
+dns-search=
+method=manual
+```
+
 ### Audio Output
 The initial output from the 3.5mm hack was very low, even with my audio mixer turned up.
 
