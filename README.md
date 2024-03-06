@@ -44,3 +44,13 @@ This project is a [balenaCloud](https://www.balena.io/cloud) stack with the foll
 - [Pi-hole](https://pi-hole.net/)
 - [PADD](https://github.com/pi-hole/PADD)
 - [Unbound](https://unbound.net)
+
+## Configuration Changes
+
+### Audio Output
+The initial output from the 3.5mm hack was very low, even with my audio mixer turned up.
+
+Open the terminal to the audio service and type `alsamixer`, use the up arrow to increase the volume to `100`
+
+![Alsamixer](assets/alsamixer.png)
+https://forums.raspberrypi.com/viewtopic.php?f=63&t=298119&start=25#p1799483
