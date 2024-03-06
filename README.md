@@ -8,6 +8,25 @@ https://blog.balena.io/two-projects-one-device-turn-your-raspberry-pi-into-a-mul
 
 However the guide was incorrect so this repo is my working configuration.
 
+```mermaid
+graph LR
+    A[Laptop] --> C
+    subgraph RaspberryPi
+        direction TB
+            subgraph BalenaSound
+                C[Airplay/Bluetooth/Spotify]-->AudioOut
+            end
+        subgraph Pihole
+            DnsServer-->piHole
+        end
+    end
+    A[Laptop]-->DnsServer
+    piHole --> Internet
+    AudioOut-->AudioMixer
+    AudioMixer--> SpeakerL
+    AudioMixer--> SpeakerR
+```
+
 ## Balena Sound
 
 [![logo](https://raw.githubusercontent.com/balena-io-projects/balena-sound/master/docs/images/balenaSound-logo.png)](https://github.com/balena-labs-projects/balena-sound)
