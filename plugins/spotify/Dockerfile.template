@@ -1,4 +1,4 @@
-FROM andrewn/librespot:0.4.2-pulseaudio
+FROM brettmillerit/librespot:0.4.2-dev-pulseaudio-rpi
 
 ENV PULSE_SERVER=tcp:localhost:4317
 
